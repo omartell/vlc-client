@@ -25,9 +25,44 @@ module VLC
         connection.write(media.nil? ? "play" : "add #{media_arg(media)}")
       end
 
+      #Adds the media to the current playlist
+      def add_to_playlist(media)
+        connection.write("enqueue #{media_arg(media)}")
+      end
+
+      #Shows the tracks from the current playlist
+      def playlist
+        connection.write("playlist")
+      end
+
+      #Plays the next item in the current playlist
+      def next
+        connection.write("next")
+      end
+
+      #Plays the previous item in the current playlist
+      def prev
+        connection.write("prev")
+      end
+
       # Pauses playback
       def pause
         connection.write("pause")
+      end
+
+      # Toggle playlist loop
+      def loop
+        connection.write("loop")
+      end
+
+      # Toggle playlist random
+      def random
+        connection.write("random")
+      end
+
+      # Clears the playlist
+      def clear
+        connection.write("clear")
       end
 
       # Stops media currently playing
