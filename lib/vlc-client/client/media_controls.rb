@@ -65,6 +65,11 @@ module VLC
         connection.write("clear")
       end
 
+      # Kills VLC daemon process
+      def shutdown
+        connection.write("shutdown")
+      end
+
       # Stops media currently playing
       def stop
         connection.write("stop")
