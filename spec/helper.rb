@@ -1,7 +1,12 @@
 require 'simplecov'
-require 'pry'
+require 'coveralls'
 
-#setup simplecov
+# SimpleCov & Coveralls setup
+SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
+  SimpleCov::Formatter::HTMLFormatter,
+  Coveralls::SimpleCov::Formatter
+]
+
 SimpleCov.start do
   add_filter "/spec"
 end
@@ -13,8 +18,8 @@ module Mocks
     tcp = double()
     TCPSocket.stub(:new).and_return do
       if opts.fetch(:defaults, true)
+        tcp.stub(:flush)
         tcp.should_receive(:gets).with(no_args).at_least(:twice).and_return("")
-        tcp.should_receive(:flush).with(no_args).any_number_of_times
         tcp.should_receive(:close).with(no_args) if opts.fetch(:close, true)
       end
 
@@ -25,39 +30,29 @@ module Mocks
   end
 
   def mock_system_calls(opts = {})
-    if opts.fetch(:daemonized, false)
-      Process.should_receive(:fork).once.ordered.and_return(false)
-
-      if RUBY_VERSION < "1.9"
-        Process.should_receive(:setsid).once.ordered
-        Process.should_receive(:fork).once.ordered.and_return(false)
-        Dir.should_receive(:chdir).once.with("/")
-      else
-        Process.should_receive(:daemon).once
-      end
-      Process.should_receive(:pid).once.and_return(99)
-
-      rd = stub('rd', :close => true)
-      wd = stub('wd', :write => true, :close => true)
-      IO.stub(:pipe).and_return([rd, wd])
-
-      [STDIN, STDOUT, STDERR].each { |std| std.stub(:reopen) }
-
+    if RUBY_VERSION < "1.9"
+      # ruby 1.8.x system call stubs
+      rd = double('rd', :read => 99, :close => true)
+      wr = double('wr', :close => true)
+      IO.stub(:pipe).and_return([rd, wr])
+      Process.stub(:fork).twice.and_return(true)
+      Process.stub(:pid).once.and_return(99)
       Kernel.stub(:exec)
+      [STDIN, STDOUT, STDERR].each { |std| std.stub(:reopen) }
     else
-      Process.stub(:fork).and_return(true)
-
-      rd = stub('rd', :read => 99, :close => true)
-      wd = stub('wd', :close => true)
-      IO.stub(:pipe).and_return([rd, wd])
-
-      Process.should_receive(:kill).once.with('INT', 99) if opts.fetch(:kill, true)
+      # ruby 1.9+ process spwan mock
+      Process.should_receive(:spawn).once.and_return(99)
     end
+
+    Process.should_receive(:kill).once.with('INT', 99) if opts.fetch(:kill, true)
   end
 
-  def mock_sub_systems
-    mock_system_calls
-    mock_tcp_server
+  def mock_file(filename)
+    File.stub(:open).and_return do
+      f = File.new('./README.md', 'r')
+      f.should_receive(:path).once.and_return(filename)
+      f
+    end
   end
 end
 

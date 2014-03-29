@@ -130,7 +130,8 @@ module VLC
       #   @param [Integer] level the volume level to set
       #
       def volume(level = nil)
-        level.nil? ? Integer(connection.write("volume", false)) : connection.write("volume #{Integer(level)}")
+        return Integer(connection.write("volume", false)) if level.nil?
+        connection.write("volume #{Integer(level)}")
       rescue ArgumentError
         level.nil? ? 0 : nil
       end
@@ -138,18 +139,6 @@ module VLC
       # @see #volume
       def volume=(level)
         volume(level)
-      end
-
-    private
-      def media_arg(media)
-        case media
-        when File
-          media.path
-        when String, URI
-          media
-        else
-          raise ArgumentError, "Can not play: #{media}"
-        end
       end
     end
   end
