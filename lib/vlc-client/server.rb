@@ -83,7 +83,7 @@ module VLC
     def stop
       return nil if stopped?
 
-      Process.kill('INT', pid = @pid)
+      Process.kill('SIGKILL', pid = @pid)
       @pid = NullObject.new
       @deamon = false
       pid
